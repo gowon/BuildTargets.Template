@@ -8,17 +8,20 @@ using System.CommandLine.IO;
 using System.CommandLine.Parsing;
 using System.Diagnostics;
 using System.Reflection;
+using Configuration;
 using Extensions.Options.AutoBinder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Debug;
 
 internal static class Program
 {
     public static string DefaultConfigFile = "buildconfig.json";
+    public static Option<FileInfo> ConfigurationFileGlobalOption = new("--config-file", "Specify configuration file");
 
-    public static Option<FileInfo> ConfigurationFileGlobalOption =
-        new("--config-file", "Specify configuration file");
+    public static Option<LogLevel> VerbosityGlobalOption =
+        new(new[] { "--verbosity", "-V" }, () => LogLevel.Warning, "Set output verbosity");
 
     private static async Task<int> Main(string[] args)
     {
@@ -27,6 +30,7 @@ internal static class Program
             var command = new RootCommand();
             RegisterCommands(command);
             command.AddGlobalOption(ConfigurationFileGlobalOption);
+            command.AddGlobalOption(VerbosityGlobalOption);
 
             command.SetHandler(context =>
             {
@@ -39,6 +43,7 @@ internal static class Program
             var parser = new CommandLineBuilder(command)
                 .UseHost(CreateHostBuilder)
                 .UseDefaults()
+                .UseDebugDirective()
                 .UseExceptionHandler((exception, context) =>
                 {
                     Console.WriteLine($"Unhandled exception occurred: {exception.Message}");
@@ -58,9 +63,9 @@ internal static class Program
     public static IHostBuilder CreateHostBuilder(string[] args)
     {
         return Host.CreateDefaultBuilder(args)
-            .ConfigureAppConfiguration((hostingContext, config) =>
+            .ConfigureAppConfiguration((context, config) =>
             {
-                var fileInfo = hostingContext.GetInvocationContext().ParseResult
+                var fileInfo = context.GetInvocationContext().ParseResult
                     .GetValueForOption(ConfigurationFileGlobalOption);
 
                 // https://www.hanselman.com/blog/how-do-i-find-which-directory-my-net-core-console-application-was-started-in-or-is-running-from
@@ -78,10 +83,12 @@ internal static class Program
             })
             .ConfigureLogging((context, builder) =>
             {
-                builder.ClearProviders();
-                builder.AddConsole().SetMinimumLevel(LogLevel.Trace);
+                var logLevel = context.GetInvocationContext().ParseResult
+                    .GetValueForOption(VerbosityGlobalOption);
+                builder.SetMinimumLevel(logLevel);
+                builder.AddFilter<DebugLoggerProvider>(level => level >= LogLevel.Debug);
             })
-            .ConfigureServices((hostContext, services) => { services.AutoBindOptions(); });
+            .ConfigureServices((context, services) => { services.AutoBindOptions(); });
     }
 
     private static void RegisterCommands(Command rootCommand)

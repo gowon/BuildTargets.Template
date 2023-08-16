@@ -14,7 +14,7 @@ public class TargetsCommand : Command
     private static readonly Option<string> ConfigurationOption =
         new(new[] { "--configuration", "-C" }, () => "Release", "The configuration to run the target");
 
-    public TargetsCommand() : base("targets", "Execute build targets.")
+    public TargetsCommand() : base("targets", "Execute build targets")
     {
         AddOption(ConfigurationOption);
 

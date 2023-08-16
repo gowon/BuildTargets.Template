@@ -1,6 +1,6 @@
 # BuildTool.Template
 
-A template for scaffolding a vendor-less, modern, extensible build pipeline for your project in .NET 6+ using [Bullseye](https://github.com/adamralph/bullseye), [SimpleExec](https://github.com/adamralph/simple-exec) and [System.CommandLine](https://github.com/dotnet/command-line-api).
+A template for scaffolding a vendor-less, modern, extensible build pipeline and tooling for your project in .NET 6+ using [Bullseye](https://github.com/adamralph/bullseye), [SimpleExec](https://github.com/adamralph/simple-exec) and [System.CommandLine](https://github.com/dotnet/command-line-api).
 
 ## Installation
 
@@ -14,10 +14,12 @@ dotnet new build-tool
 
 ### Using Build Tool
 
-Ping Cloudflare DNS server
+Examples:
 
 ```powershell
-.\build.ps1 ping --additional-args="--endpoint 1.1.1.1"
+.\build.ps1 -?
+.\build.ps1 targets restore-tools
+.\build.ps1 ping --endpoint 1.1.1.1
 ```
 
 ## Inspiration
