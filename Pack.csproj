@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <PackageType>Template</PackageType>
+        <PackageVersion>1.0</PackageVersion>
+        <PackageId>BuildTool.Template</PackageId>
+        <Title>Build Tool Template</Title>
+        <Authors>Gowon Patterson</Authors>
+        <Description>A template for scaffolding a vendor-less, modern, extensible build pipeline and tooling for your project in .NET 6+ using Bullseye, SimpleExec and System.CommandLine.</Description>
+        <PackageTags>dotnet-new;templates;</PackageTags>
+        <PackageProjectUrl>https://github.com/gowon/BuildTool.Template</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/gowon/BuildTool.Template</RepositoryUrl>
+        <PackageIcon>logo.png</PackageIcon>
+
+        <TargetFramework>net6.0</TargetFramework>
+
+        <IncludeContentInPack>true</IncludeContentInPack>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <ContentTargetFolders>content</ContentTargetFolders>
+        <NoWarn>$(NoWarn);NU5128</NoWarn>
+        <NoDefaultExcludes>true</NoDefaultExcludes>
+
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+
+        <MinVerTagPrefix>v</MinVerTagPrefix>
+        <MinVerDefaultPreReleasePhase>preview</MinVerDefaultPreReleasePhase>
+        <MinVerAutoIncrement>minor</MinVerAutoIncrement>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Content Include="Content\**\*" Exclude="Content\**\bin\**;Content\**\obj\**" />
+        <Compile Remove="**\*" />
+        <None Include="Content\readme.md" Pack="true" PackagePath="\" />
+        <None Include="logo.png" Pack="true" Visible="false" PackagePath="" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MinVer" Version="4.3.0" PrivateAssets="All" />
+    </ItemGroup>
+</Project>

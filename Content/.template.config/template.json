@@ -25,7 +25,8 @@
                         "obj/**",
                         "bin/**",
                         "build/.idea/**",
-                        "README.md"
+                        "README.md",
+                        "build.sln.DotSettings"
                     ]
                 }
             ]
