@@ -6,8 +6,6 @@ using System.CommandLine.Help;
 using System.CommandLine.Hosting;
 using System.CommandLine.IO;
 using System.CommandLine.Parsing;
-using System.Diagnostics;
-using System.Reflection;
 using Configuration;
 using Extensions.Options.AutoBinder;
 using Microsoft.Extensions.Configuration;
@@ -20,16 +18,20 @@ internal static class Program
     public static string DefaultConfigFile = "buildconfig.json";
     public static Option<FileInfo> ConfigurationFileGlobalOption = new("--config-file", "Specify configuration file");
 
+    public static Option<DirectoryInfo>
+        WorkingDirectoryGlobalOption = new("--working-dir", "Specify working directory");
+
     public static Option<LogLevel> VerbosityGlobalOption =
-        new(new[] { "--verbosity", "-V" }, () => LogLevel.Warning, "Set output verbosity");
+        new(new[] { "--log-verbosity" }, () => LogLevel.Warning, "Set log verbosity");
 
     private static async Task<int> Main(string[] args)
     {
         try
         {
             var command = new RootCommand();
-            RegisterCommands(command);
+            command.RegisterCommandsInAssembly();
             command.AddGlobalOption(ConfigurationFileGlobalOption);
+            command.AddGlobalOption(WorkingDirectoryGlobalOption);
             command.AddGlobalOption(VerbosityGlobalOption);
 
             command.SetHandler(context =>
@@ -68,9 +70,7 @@ internal static class Program
                 var fileInfo = context.GetInvocationContext().ParseResult
                     .GetValueForOption(ConfigurationFileGlobalOption);
 
-                // https://www.hanselman.com/blog/how-do-i-find-which-directory-my-net-core-console-application-was-started-in-or-is-running-from
-                // https://stackoverflow.com/a/97491/7644876
-                var basePath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule!.FileName);
+                var basePath = context.GetInvocationContext().GetWorkingDirectory();
 
                 var configFilePath = fileInfo is { Exists: true }
                     ? fileInfo.FullName
@@ -89,16 +89,5 @@ internal static class Program
                 builder.AddFilter<DebugLoggerProvider>(level => level >= LogLevel.Debug);
             })
             .ConfigureServices((context, services) => { services.AutoBindOptions(); });
-    }
-
-    private static void RegisterCommands(Command rootCommand)
-    {
-        var types = Assembly.GetExecutingAssembly().GetTypes().Where(type =>
-            type.IsClass &&
-            !type.IsAbstract &&
-            type.IsSubclassOf(typeof(Command)) &&
-            type.GetConstructors().Any(info => !info.GetParameters().Any()));
-
-        foreach (var type in types) rootCommand.AddCommand((Command)Activator.CreateInstance(type)!);
     }
 }

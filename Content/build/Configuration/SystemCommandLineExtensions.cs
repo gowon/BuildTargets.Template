@@ -1,12 +1,38 @@
 ﻿namespace build.Configuration;
 
+using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Invocation;
 using System.CommandLine.IO;
 using System.Diagnostics;
+using System.Reflection;
 
-public static class CommandLineBuilderExtensions
+public static class SystemCommandLineExtensions
 {
+    public static string GetWorkingDirectory(this InvocationContext context)
+    {
+        var workingDirectory = context.ParseResult
+            .GetValueForOption(Program.WorkingDirectoryGlobalOption);
+
+        // get passed value or default to the directory that the executable is running in
+        // https://www.hanselman.com/blog/how-do-i-find-which-directory-my-net-core-console-application-was-started-in-or-is-running-from
+        // https://stackoverflow.com/a/97491/7644876
+        // question: original method = Process.GetCurrentProcess().MainModule!.FileName
+        return workingDirectory?.FullName ??
+               Path.GetDirectoryName(Environment.ProcessPath) ?? Directory.GetCurrentDirectory();
+    }
+
+    public static void RegisterCommandsInAssembly(this RootCommand rootCommand, Assembly? assembly = null)
+    {
+        assembly ??= Assembly.GetExecutingAssembly();
+        var types = assembly.GetTypes().Where(type =>
+            type is { IsClass: true, IsAbstract: false } &&
+            type.IsSubclassOf(typeof(Command)) &&
+            type.GetConstructors().Any(info => !info.GetParameters().Any()));
+
+        foreach (var type in types) rootCommand.AddCommand((Command)Activator.CreateInstance(type)!);
+    }
+
     // removed in https://github.com/dotnet/command-line-api/pull/1585
     // ref https://github.com/dotnet/command-line-api/blob/7e5307c186034691d46cf14ea18c09ea4e9e738d/src/System.CommandLine/Builder/CommandLineBuilderExtensions.cs#L228
     // ref https://github.com/dotnet/command-line-api/blob/7e5307c186034691d46cf14ea18c09ea4e9e738d/src/System.CommandLine/Properties/Resources.resx#L213

@@ -17,11 +17,12 @@ public class TargetsCommand : Command
     public TargetsCommand() : base("targets", "Execute build targets")
     {
         AddOption(ConfigurationOption);
-
         ImportBullseyeConfigurations();
 
         this.SetHandler(async context =>
         {
+            var configuration = context.ParseResult.GetValueForOption(ConfigurationOption);
+
             Target(Targets.RestoreTools, async () => { await RunAsync("dotnet", "tool restore"); });
 
             Target(Targets.CleanArtifactsOutput, () =>
@@ -32,32 +33,17 @@ public class TargetsCommand : Command
                 }
             });
 
-            Target(Targets.CleanTestsOutput, () =>
-            {
-                if (Directory.Exists(TestResultsDirectory))
-                {
-                    Directory.Delete(TestResultsDirectory, true);
-                }
-            });
-
-            Target(Targets.CleanBuildOutput, async () =>
-            {
-                var configuration = context.ParseResult.GetValueForOption(ConfigurationOption);
-                await RunAsync("dotnet", $"clean -c {configuration} -v m --nologo");
-            });
+            Target(Targets.CleanBuildOutput,
+                async () => { await RunAsync("dotnet", $"clean -c {configuration} -v m --nologo"); });
 
             Target(Targets.CleanAll,
-                DependsOn(Targets.CleanArtifactsOutput, Targets.CleanTestsOutput, Targets.CleanBuildOutput));
+                DependsOn(Targets.CleanArtifactsOutput, Targets.CleanBuildOutput));
 
-            Target(Targets.Build, DependsOn(Targets.CleanBuildOutput), async () =>
-            {
-                var configuration = context.ParseResult.GetValueForOption(ConfigurationOption);
-                await RunAsync("dotnet", $"build -c {configuration} --nologo");
-            });
+            Target(Targets.Build, DependsOn(Targets.CleanBuildOutput),
+                async () => { await RunAsync("dotnet", $"build -c {configuration} --nologo"); });
 
             Target(Targets.Pack, DependsOn(Targets.CleanArtifactsOutput, Targets.Build), async () =>
             {
-                var configuration = context.ParseResult.GetValueForOption(ConfigurationOption);
                 await RunAsync("dotnet",
                     $"pack -c {configuration} -o {Directory.CreateDirectory(ArtifactsDirectory).FullName} --no-build --nologo");
             });
@@ -66,16 +52,19 @@ public class TargetsCommand : Command
 
             Target("default", DependsOn(Targets.RunTests, Targets.PublishArtifacts));
 
-            Target(Targets.RunTests, DependsOn(Targets.CleanTestsOutput, Targets.Build), async () =>
+            Target(Targets.RunTests, DependsOn(Targets.Build), async () =>
             {
-                var configuration = context.ParseResult.GetValueForOption(ConfigurationOption);
+                var outputPath = Path.Combine(ArtifactsDirectory, "test-results");
                 await RunAsync("dotnet",
-                    $"test -c {configuration} --no-build --nologo --collect:\"XPlat Code Coverage\" --results-directory {TestResultsDirectory}");
+                    $"test -c {configuration} --no-build --nologo --collect:\"XPlat Code Coverage\" --results-directory {outputPath}");
             });
 
             Target(Targets.RunTestsCoverage, DependsOn(Targets.RestoreTools, Targets.RunTests), () =>
+            {
+                var outputPath = Path.Combine(ArtifactsDirectory, "coveragereport");
                 Run("dotnet",
-                    $"reportgenerator -reports:{TestResultsDirectory}/**/*cobertura.xml -targetdir:{TestResultsDirectory}/coveragereport -reporttypes:HtmlSummary"));
+                    $"reportgenerator -reports:{TestResultsDirectory}/**/*cobertura.xml -targetdir:{outputPath} -reporttypes:HtmlSummary");
+            });
 
             await RunBullseyeTargetsAsync(context);
         });
@@ -109,7 +98,6 @@ internal static class Targets
     public const string RestoreTools = "restore-tools";
     public const string CleanBuildOutput = "clean-build-output";
     public const string CleanArtifactsOutput = "clean-artifacts-output";
-    public const string CleanTestsOutput = "clean-test-output";
     public const string CleanAll = "clean";
     public const string Build = "build";
     public const string RunTests = "run-tests";

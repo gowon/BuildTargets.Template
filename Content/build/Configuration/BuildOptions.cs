@@ -6,7 +6,7 @@ using Extensions.Options.AutoBinder;
 public class BuildOptions
 {
     public NugetOptions Nuget { get; set; } = new();
-    public string ArtifactsDirectory { get; set; } = @".\.artifacts";
+    public string? ArtifactsDirectory { get; set; }
 }
 
 public class NugetOptions
