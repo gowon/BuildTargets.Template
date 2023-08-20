@@ -19,14 +19,10 @@
             "modifiers": [
                 {
                     "exclude": [
-                        ".vs/**",
-                        ".idea/**",
-                        ".git/**",
-                        "obj/**",
-                        "bin/**",
-                        "build/.idea/**",
-                        "README.md",
-                        "build.sln.DotSettings"
+                        "**/.vs/**",
+                        "readme.md",
+                        "**/build.sln",
+                        "**/build.sln.DotSettings"
                     ]
                 }
             ]

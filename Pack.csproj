@@ -25,12 +25,12 @@
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
 
         <MinVerTagPrefix>v</MinVerTagPrefix>
-        <MinVerDefaultPreReleasePhase>preview</MinVerDefaultPreReleasePhase>
+        <MinVerDefaultPreReleaseIdentifiers>preview.0</MinVerDefaultPreReleaseIdentifiers>
         <MinVerAutoIncrement>minor</MinVerAutoIncrement>
     </PropertyGroup>
 
     <ItemGroup>
-        <Content Include="Content\**\*" Exclude="Content\**\bin\**;Content\**\obj\**" />
+        <Content Include="Content\**\*" Exclude="Content\**\bin\**;Content\**\obj\**;Content\**\.vs\**" />
         <Compile Remove="**\*" />
         <None Include="Content\readme.md" Pack="true" PackagePath="\" />
         <None Include="logo.png" Pack="true" Visible="false" PackagePath="" />
