@@ -1,11 +1,14 @@
-﻿namespace build.Configuration;
+﻿namespace build.Extensions;
 
 using System.CommandLine;
 using System.CommandLine.Builder;
+using System.CommandLine.Hosting;
 using System.CommandLine.Invocation;
 using System.CommandLine.IO;
 using System.Diagnostics;
 using System.Reflection;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 public static class SystemCommandLineExtensions
 {
@@ -14,12 +17,10 @@ public static class SystemCommandLineExtensions
         var workingDirectory = context.ParseResult
             .GetValueForOption(Program.WorkingDirectoryGlobalOption);
 
-        // get passed value or default to the directory that the executable is running in
+        // question: should we ever default to the directory that the executable is running in? Environment.ProcessPath
         // https://www.hanselman.com/blog/how-do-i-find-which-directory-my-net-core-console-application-was-started-in-or-is-running-from
         // https://stackoverflow.com/a/97491/7644876
-        // question: original method = Process.GetCurrentProcess().MainModule!.FileName
-        return workingDirectory?.FullName ??
-               Path.GetDirectoryName(Environment.ProcessPath) ?? Directory.GetCurrentDirectory();
+        return workingDirectory is { Exists: true } ? workingDirectory.FullName : Directory.GetCurrentDirectory();
     }
 
     public static void RegisterCommandsInAssembly(this RootCommand rootCommand, Assembly? assembly = null)
@@ -77,6 +78,23 @@ public static class SystemCommandLineExtensions
 
             await next(context);
         }, MiddlewareOrder.ExceptionHandler);
+
+        return builder;
+    }
+
+    public static CommandLineBuilder UseConfigurationDirective(this CommandLineBuilder builder)
+    {
+        builder.AddMiddleware(async (context, next) =>
+        {
+            if (context.ParseResult.Directives.Contains("config"))
+            {
+                var configuration =
+                    context.GetHost().Services.GetRequiredService<IConfiguration>() as IConfigurationRoot;
+                context.Console.Error.WriteLine(configuration!.GetDebugView());
+            }
+
+            await next(context);
+        });
 
         return builder;
     }

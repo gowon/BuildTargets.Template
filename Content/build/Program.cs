@@ -6,12 +6,13 @@ using System.CommandLine.Help;
 using System.CommandLine.Hosting;
 using System.CommandLine.IO;
 using System.CommandLine.Parsing;
-using Configuration;
-using Extensions.Options.AutoBinder;
+using Extensions;
+using global::Extensions.Options.AutoBinder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Debug;
+using Spectre.Console;
 
 internal static class Program
 {
@@ -37,15 +38,19 @@ internal static class Program
             command.SetHandler(context =>
             {
                 // ref: https://github.com/dotnet/command-line-api/issues/1537
-                context.HelpBuilder.CustomizeLayout(_ => HelpBuilder.Default.GetLayout().Skip(1));
+                context.HelpBuilder.CustomizeLayout(_ =>
+                    HelpBuilder.Default.GetLayout().Skip(1).Prepend(
+                        _ => AnsiConsole.Write(new FigletText("build tool").LeftJustified()
+                            .Color(Color.Orange3))));
                 context.HelpBuilder.Write(context.ParseResult.CommandResult.Command,
                     context.Console.Out.CreateTextWriter());
             });
 
             var parser = new CommandLineBuilder(command)
-                .UseHost(CreateHostBuilder)
+                .UseHost(Host.CreateDefaultBuilder, builder => builder.ConfigureHostBuilder(args))
                 .UseDefaults()
                 .UseDebugDirective()
+                .UseConfigurationDirective()
                 .UseExceptionHandler((exception, context) =>
                 {
                     Console.WriteLine($"Unhandled exception occurred: {exception.Message}");
@@ -62,9 +67,11 @@ internal static class Program
         }
     }
 
-    public static IHostBuilder CreateHostBuilder(string[] args)
+    private static void ConfigureHostBuilder(this IHostBuilder builder, string[] args)
     {
-        return Host.CreateDefaultBuilder(args)
+        // ref: https://github.com/dotnet/command-line-api/issues/2250
+        // ref: https://github.com/dotnet/command-line-api/issues/1838#issuecomment-1242435714
+        builder.ConfigureDefaults(args)
             .ConfigureAppConfiguration((context, config) =>
             {
                 var fileInfo = context.GetInvocationContext().ParseResult
@@ -77,17 +84,18 @@ internal static class Program
                     : DefaultConfigFile;
 
                 config
-                    .SetBasePath(basePath!)
+                    .SetBasePath(basePath)
                     .AddJsonFile(configFilePath, true, false)
                     .AddEnvironmentVariables();
             })
-            .ConfigureLogging((context, builder) =>
+            .ConfigureLogging((context, loggingBuilder) =>
             {
                 var logLevel = context.GetInvocationContext().ParseResult
                     .GetValueForOption(VerbosityGlobalOption);
-                builder.SetMinimumLevel(logLevel);
-                builder.AddFilter<DebugLoggerProvider>(level => level >= LogLevel.Debug);
+
+                loggingBuilder.SetMinimumLevel(logLevel);
+                loggingBuilder.AddFilter<DebugLoggerProvider>(level => level >= LogLevel.Debug);
             })
-            .ConfigureServices((context, services) => { services.AutoBindOptions(); });
+            .ConfigureServices((_, services) => { services.AutoBindOptions(); });
     }
 }

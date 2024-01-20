@@ -1,69 +1,85 @@
 ﻿namespace build.Commands;
 
 using System.CommandLine;
+using System.CommandLine.Hosting;
 using System.CommandLine.Invocation;
 using Bullseye;
+using Extensions;
+using Microsoft.Extensions.DependencyInjection;
 using static Bullseye.Targets;
 using static SimpleExec.Command;
 
-public class TargetsCommand : Command
+public sealed class TargetsCommand : Command
 {
-    private const string ArtifactsDirectory = ".artifacts";
+    private static readonly Option<string> AdditionalArgumentsOption =
+        new(new[] { "--additional-args", "-a" }, "Additional arguments to be processed by the targets");
 
     private static readonly Option<string> ConfigurationOption =
         new(new[] { "--configuration", "-C" }, () => "Release", "The configuration to run the target");
 
     public TargetsCommand() : base("targets", "Execute build targets")
     {
+        AddOption(AdditionalArgumentsOption);
         AddOption(ConfigurationOption);
+
         ImportBullseyeConfigurations();
 
         this.SetHandler(async context =>
         {
+            // pre-processing
+            var provider = context.GetHost().Services;
+            var options = provider.GetRequiredService<TargetsCommandOptions>();
+            var additionalArgs = context.ParseResult.GetValueForOption(AdditionalArgumentsOption);
             var configuration = context.ParseResult.GetValueForOption(ConfigurationOption);
-            var testOutputPath = Path.Combine(ArtifactsDirectory, "test-results");
-            var reportsOutputPath = Path.Combine(ArtifactsDirectory, "coveragereport");
+            var workingDirectory = context.GetWorkingDirectory();
 
-            Target(Targets.RestoreTools, async () => { await RunAsync("dotnet", "tool restore"); });
+            // find most-explicit project/solution path for dotnet commands
+            // ref: https://developercommunity.visualstudio.com/t/docker-compose-project-confuses-dotnet-build/615379
+            // ref: https://developercommunity.visualstudio.com/t/multiple-docker-compose-dcproj-in-a-visual-studio/252877
+            var findDotnetSolution = Directory.GetFiles(workingDirectory).FirstOrDefault(s => s.EndsWith(".sln")) ??
+                                     string.Empty;
+            var dotnetSolutionPath = Path.Combine(workingDirectory, findDotnetSolution);
 
-            Target(Targets.CleanArtifactsOutput, () =>
+            Target(Targets.RestoreTools, "Restore .NET command line tools",
+                async () => { await RunAsync("dotnet", "tool restore"); });
+
+            Target(Targets.CleanArtifactsOutput, "Delete all artifacts and folder", () =>
             {
-                if (Directory.Exists(ArtifactsDirectory))
+                if (Directory.Exists(options.ArtifactsDirectory))
                 {
-                    Directory.Delete(ArtifactsDirectory, true);
+                    Directory.Delete(options.ArtifactsDirectory, true);
                 }
             });
 
-            Target(Targets.CleanBuildOutput,
-                async () => { await RunAsync("dotnet", $"clean -c {configuration} -v m --nologo"); });
-
-            Target(Targets.CleanAll,
-                DependsOn(Targets.CleanArtifactsOutput, Targets.CleanBuildOutput));
-
-            Target(Targets.Build, DependsOn(Targets.CleanBuildOutput),
-                async () => { await RunAsync("dotnet", $"build -c {configuration} --nologo"); });
-
-            Target(Targets.Pack, DependsOn(Targets.CleanArtifactsOutput, Targets.Build), async () =>
+            Target(Targets.CleanTestsOutput, "Delete all test artifacts and folder", () =>
             {
-                await RunAsync("dotnet",
-                    $"pack -c {configuration} -o {Directory.CreateDirectory(ArtifactsDirectory).FullName} --no-build --nologo");
+                if (Directory.Exists(options.TestResultsDirectory))
+                {
+                    Directory.Delete(options.TestResultsDirectory, true);
+                }
             });
 
-            Target(Targets.PublishArtifacts, DependsOn(Targets.Pack), () => Console.WriteLine("publish artifacts"));
+            Target(Targets.CleanAll, "Execute all 'clean' operations",
+                DependsOn(Targets.CleanArtifactsOutput, Targets.CleanTestsOutput));
 
-            Target("default", DependsOn(Targets.RunTests, Targets.PublishArtifacts));
+            Target(Targets.Build, "Build all projects in the solution",
+                async () => { await RunAsync("dotnet", $"build {dotnetSolutionPath} -c {configuration} --nologo"); });
 
-            Target(Targets.RunTests, DependsOn(Targets.Build), async () =>
-            {
-                await RunAsync("dotnet",
-                    $"test -c {configuration} --no-build --nologo --collect:\"XPlat Code Coverage\" --results-directory {testOutputPath}");
-            });
+            Target(Targets.Pack, "Package projects for deployment",
+                DependsOn(Targets.CleanArtifactsOutput, Targets.RestoreTools, Targets.Build), async () =>
+                {
+                    await RunAsync("dotnet",
+                        $"pack {dotnetSolutionPath} -c {configuration} -o {Directory.CreateDirectory(options.ArtifactsDirectory).FullName} --no-build --nologo");
+                });
 
-            Target(Targets.RunTestsCoverage, DependsOn(Targets.RestoreTools, Targets.RunTests), () =>
-            {
-                Run("dotnet",
-                    $"reportgenerator -reports:{testOutputPath}/**/*cobertura.xml -targetdir:{reportsOutputPath} -reporttypes:HtmlSummary");
-            });
+            Target("default", DependsOn(Targets.RunTests, Targets.Pack));
+
+            Target(Targets.RunTests, "Run automated tests for the solution",
+                DependsOn(Targets.CleanTestsOutput, Targets.Build), async () =>
+                {
+                    await RunAsync("dotnet",
+                        $"test {dotnetSolutionPath} -c {configuration} --no-build --nologo --results-directory {options.TestResultsDirectory} {additionalArgs}");
+                });
 
             await RunBullseyeTargetsAsync(context);
         });
@@ -93,13 +109,11 @@ public class TargetsCommand : Command
 
 internal static class Targets
 {
-    public const string RunTestsCoverage = "run-tests-coverage";
-    public const string RestoreTools = "restore-tools";
-    public const string CleanBuildOutput = "clean-build-output";
-    public const string CleanArtifactsOutput = "clean-artifacts-output";
-    public const string CleanAll = "clean";
     public const string Build = "build";
-    public const string RunTests = "run-tests";
+    public const string CleanAll = "clean";
+    public const string CleanArtifactsOutput = "clean-artifacts-output";
+    public const string CleanTestsOutput = "clean-test-output";
     public const string Pack = "pack";
-    public const string PublishArtifacts = "publish-artifacts";
+    public const string RestoreTools = "restore-tools";
+    public const string RunTests = "run-tests";
 }
