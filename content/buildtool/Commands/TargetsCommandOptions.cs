@@ -1,4 +1,4 @@
-﻿namespace build.Commands;
+﻿namespace Template._1.Commands;
 
 using global::Extensions.Options.AutoBinder;
 

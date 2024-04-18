@@ -2,14 +2,14 @@
   "$schema": "http://json.schemastore.org/template",
   "author": "Gowon Patterson",
   "classifications": [
-    "C#",
-    "Console",
+    "Configuration",
     "Build",
     "Tool"
   ],
   "name": "Build tool configuration file",
   "identity": "BuildTool.Config",
   "shortName": "build-tool-config",
+  "sourceName":"buildconfig.json",
   "tags": {
     "type": "item"
   }

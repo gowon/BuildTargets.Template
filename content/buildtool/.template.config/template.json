@@ -1,31 +1,32 @@
 {
-    "$schema": "http://json.schemastore.org/template",
-    "author": "Gowon Patterson",
-    "classifications": [
-        "C#",
-        "Console",
-        "Build",
-        "Tool"
-    ],
-    "name": "Simple build tool project",
-    "identity": "BuildTool.Template",
-    "shortName": "build-tool",
-    "tags": {
-        "language": "C#",
-        "type": "project"
-    },
-    "sources": [
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Gowon Patterson",
+  "classifications": [
+    "C#",
+    "Console",
+    "Build",
+    "Tool"
+  ],
+  "name": "Build tool project",
+  "identity": "BuildTool.Project",
+  "shortName": "build-tool",
+  "sourceName":"Template.1",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "sources": [
+    {
+      "modifiers": [
         {
-            "modifiers": [
-                {
-                    "exclude": [
-                        "**/.vs/**",
-                        "readme.md",
-                        "**/build.sln",
-                        "**/build.sln.DotSettings"
-                    ]
-                }
-            ]
+          "exclude": [
+            "**/.vs/**",
+            "readme.md",
+            "**/Template.1.sln",
+            "**/Template.1.sln.DotSettings"
+          ]
         }
-    ]
+      ]
+    }
+  ]
 }

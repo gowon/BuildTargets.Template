@@ -1,4 +1,4 @@
-﻿namespace build.Extensions;
+﻿namespace Template._1.Extensions;
 
 using System.CommandLine;
 using System.CommandLine.Builder;

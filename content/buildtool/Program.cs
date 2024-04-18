@@ -1,4 +1,4 @@
-﻿namespace build;
+﻿namespace Template._1;
 
 using System.CommandLine;
 using System.CommandLine.Builder;

@@ -2,7 +2,6 @@
   "$schema": "http://json.schemastore.org/template",
   "author": "Gowon Patterson",
   "classifications": [
-    "C#",
     "Console",
     "Build",
     "Tool"
@@ -10,17 +9,8 @@
   "name": "Build tool command line wrappers",
   "identity": "BuildTool.CliWrappers",
   "shortName": "build-tool-wrappers",
+  "sourceName":"build",
   "tags": {
     "type": "item"
-  },
-  "symbols": {
-    "FileName": {
-      "type": "parameter",
-      "description": "The name of the wrapper files. This should match the name of the build tool project.",
-      "datatype": "text",
-      "replaces": "build",
-      "fileRename": "build",
-      "defaultValue": "build"
-    }
   }
 }

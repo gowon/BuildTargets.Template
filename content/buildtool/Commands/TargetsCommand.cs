@@ -1,4 +1,4 @@
-﻿namespace build.Commands;
+﻿namespace Template._1.Commands;
 
 using System.CommandLine;
 using System.CommandLine.Hosting;

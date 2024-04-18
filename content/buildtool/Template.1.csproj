@@ -3,14 +3,16 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
+    <RootNamespace>Template._1</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <LangVersion>latest</LangVersion>
     <Optimize>False</Optimize>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="build.sln.DotSettings" />
+    <None Remove="Template.1.sln.DotSettings" />
   </ItemGroup>
 
   <ItemGroup>

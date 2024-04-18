@@ -25,7 +25,7 @@
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
 
         <MinVerTagPrefix>v</MinVerTagPrefix>
-        <MinVerDefaultPreReleaseIdentifiers>preview.0</MinVerDefaultPreReleaseIdentifiers>
+        <MinVerDefaultPreReleaseIdentifiers>preview</MinVerDefaultPreReleaseIdentifiers>
         <MinVerAutoIncrement>minor</MinVerAutoIncrement>
     </PropertyGroup>
 
