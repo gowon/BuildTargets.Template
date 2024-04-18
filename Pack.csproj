@@ -3,10 +3,10 @@
     <PropertyGroup>
         <PackageType>Template</PackageType>
         <PackageVersion>1.0</PackageVersion>
-        <PackageId>BuildTool.Template</PackageId>
-        <Title>Build Tool Template</Title>
+        <PackageId>BuildTool.Templates</PackageId>
+        <Title>Build Tool Templates</Title>
         <Authors>Gowon Patterson</Authors>
-        <Description>A template for scaffolding a vendor-less, modern, extensible build pipeline and tooling for your project in .NET 6+ using Bullseye, SimpleExec and System.CommandLine.</Description>
+        <Description>Templates for scaffolding a vendor-less, modern, extensible build pipeline and tooling for your project in .NET 6+ using Bullseye, SimpleExec and System.CommandLine.</Description>
         <PackageTags>dotnet-new;templates;</PackageTags>
         <PackageProjectUrl>https://github.com/gowon/BuildTool.Template</PackageProjectUrl>
         <RepositoryUrl>https://github.com/gowon/BuildTool.Template</RepositoryUrl>
@@ -30,9 +30,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Content Include="Content\**\*" Exclude="Content\**\bin\**;Content\**\obj\**;Content\**\.vs\**" />
+        <Content Include="content\**\*" Exclude="content\**\bin\**;content\**\obj\**;content\**\.vs\**" />
         <Compile Remove="**\*" />
-        <None Include="Content\readme.md" Pack="true" PackagePath="\" />
+        <None Include="README.md" Pack="true" PackagePath="\" />
         <None Include="logo.png" Pack="true" Visible="false" PackagePath="" />
     </ItemGroup>
 

@@ -7,8 +7,8 @@
     "Build",
     "Tool"
   ],
-  "name": "Build tool project command line wrappers",
-  "identity": "BuildTool.Template.Wrappers",
+  "name": "Build tool command line wrappers",
+  "identity": "BuildTool.CliWrappers",
   "shortName": "build-tool-wrappers",
   "tags": {
     "type": "item"
